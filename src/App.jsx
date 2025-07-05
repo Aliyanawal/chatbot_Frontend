@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { socket } from "./socket";
+import { v4 as uuidv4 } from "uuid"; // install uuid
+
+// npm install uuid
 
 function App() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [userId] = useState(uuidv4()); // Unique ID per user
 
   useEffect(() => {
     socket.on("receive_message", (data) => {
@@ -16,8 +20,13 @@ function App() {
   }, []);
 
   const sendMessage = () => {
-    socket.emit("send_message", message);
-    setMessages([...messages, message]);
+    const msgData = {
+      id: uuidv4(),
+      sender: userId,
+      content: message,
+    };
+    socket.emit("send_message", msgData);
+    setMessages([...messages, msgData]);
     setMessage("");
   };
 
@@ -25,8 +34,17 @@ function App() {
     <div className="h-screen bg-gray-900 flex items-center justify-center text-white">
       <div className="w-full max-w-md">
         <div className="bg-white text-black p-4 h-80 overflow-y-auto rounded">
-          {messages.map((msg, i) => (
-            <div key={i} className="my-2">{msg}</div>
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`my-2 p-2 rounded max-w-[70%] ${
+                msg.sender === userId
+                  ? "bg-purple-600 text-white ml-auto text-right"
+                  : "bg-gray-300 text-black mr-auto text-left"
+              }`}
+            >
+              {msg.content}
+            </div>
           ))}
         </div>
         <div className="mt-4 flex">
